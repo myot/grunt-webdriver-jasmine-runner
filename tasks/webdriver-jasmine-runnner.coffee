@@ -89,7 +89,7 @@ module.exports = (grunt) ->
                 _.compact(
                     _.map(
                         _.pluck(
-                            _.rest(document.querySelectorAll(".symbolSummary li"), outputDots),
+                            _.rest(document.querySelectorAll(".symbol-summary li"), outputDots),
                             'className'
                         ),
                         (status) ->
@@ -123,9 +123,9 @@ module.exports = (grunt) ->
                 symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent) ->
                     webdriver.promise.fullyResolved(
                         [
-                            driver.executeScript('return document.querySelectorAll(".symbolSummary .passed").length').then (passedElements) ->
+                            driver.executeScript('return document.querySelectorAll(".symbol-summary .passed").length').then (passedElements) ->
                                 pendingFailureDots = passedElements - outputPasses
-                            driver.executeScript('return document.querySelectorAll(".symbolSummary .failed").length').then (failedElements) ->
+                            driver.executeScript('return document.querySelectorAll(".symbol-summary .failed").length').then (failedElements) ->
                                 pendingFailureDots = failedElements - outputFailures
                         ]
                     ).then ([pendingPasses, pendingFailures]) ->
@@ -151,11 +151,11 @@ module.exports = (grunt) ->
                         startTime = new Date()
                         # This section parses the jasmine so that the results can be written to the console.
                         driver.wait ->
-                            driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
+                            driver.isElementPresent(webdriver.By.className('symbol-summary')).then (symbolSummaryFound)->
                                 symbolSummaryFound
                         , 5000
-                        driver.findElement(webdriver.By.className('symbolSummary')).then (symbolSummaryElement) ->
-                            driver.executeScript('return {numTests: document.querySelectorAll(".symbolSummary li").length, underscore: !!window._}').then (summary) ->
+                        driver.findElement(webdriver.By.className('symbol-summary')).then (symbolSummaryElement) ->
+                            driver.executeScript('return {numTests: document.querySelectorAll(".symbol-summary li").length, underscore: !!window._}').then (summary) ->
                                 numTests = summary.numTests
                                 hasUnderscore = summary.underscore
                                 grunt.log.writeln 'Test page loaded.  Running ' + "#{numTests}".cyan + ' tests...'
