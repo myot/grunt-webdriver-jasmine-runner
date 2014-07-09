@@ -169,14 +169,14 @@ module.exports = (grunt) ->
 
                                 , options.allTestsTimeout
                                 driver.wait ->
-                                    driver.isElementPresent(webdriver.By.id('details')).then (isPresent) ->
+                                    driver.isElementPresent(webdriver.By.id('results')).then (isPresent) ->
                                         isPresent
                                 , 6000
-                                driver.findElement(webdriver.By.id('details')).then (detailsElement) ->
+                                driver.findElement(webdriver.By.id('results')).then (detailsElement) ->
                                     grunt.log.writeln "Done running all tests. Suite took #{(new Date() - startTime) / 1000} seconds."
                                     detailsElement.isElementPresent(webdriver.By.className('failed')).then (hasFailures) ->
                                         if (hasFailures)
-                                            detailsElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
+                                            detailsElement.findElements(webdriver.By.className('failures')).then (failedElements) ->
                                                 grunt.log.writeln "#{failedElements.length} of #{numTests} tests failed:".red
                                                 webdriver.promise.fullyResolved(failedElement.getText() for failedElement in failedElements).then (failureTexts) ->
                                                     grunt.log.writeln (failureText.yellow for failureText in failureTexts).join("\n\n")
