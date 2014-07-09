@@ -96,6 +96,7 @@ module.exports = (grunt) ->
                             switch status
                                 when 'passed' then '.'
                                 when 'failed' then 'F'
+                                when 'pending' then '*'
                                 else null
                     )
                 ).join('')
@@ -103,11 +104,12 @@ module.exports = (grunt) ->
             outputStatusUntilDoneWithUnderscore = (numTests, symbolSummaryElement) ->
                 driver.executeScript(getAllTestResultsViaUnderscore, outputDots).then (results) ->
                     notYetOutput = results.length
-                    isPendingPresent = (outputDots + notYetOutput) < numTests
+                    #grunt.log.writeln("not yet #{notYetOutput} ")
+                    isPendingPresent = (notYetOutput > 0)
                     dotsThreshold = if isPendingPresent then 100 else 0
                     outputStart = 0
-                    while notYetOutput > dotsThreshold
-                        toOutput = Math.min(notYetOutput, 100)
+                    while notYetOutput > 0
+                        toOutput = notYetOutput
                         toOutputStr = results.slice(outputStart, outputStart + toOutput)
                         outputFailures += toOutputStr.split('F').length - 1
 
@@ -115,7 +117,7 @@ module.exports = (grunt) ->
                         outputDots += toOutput
                         outputStart += toOutput
 
-                        grunt.log.writeln("#{toOutputStr} #{outputDots} / #{numTests} (#{outputFailures})")
+                        grunt.log.writeln("#{toOutputStr} #{outputDots} (#{outputFailures})")
 
                     isPendingPresent
 
@@ -156,9 +158,11 @@ module.exports = (grunt) ->
                         , 5000
                         driver.findElement(webdriver.By.className('symbol-summary')).then (symbolSummaryElement) ->
                             driver.executeScript('return {numTests: document.querySelectorAll(".symbol-summary li").length, underscore: !!window._}').then (summary) ->
+
                                 numTests = summary.numTests
+                                grunt.log.writeln("Num test first: #{numTests}")
                                 hasUnderscore = summary.underscore
-                                grunt.log.writeln 'Test page loaded.  Running ' + "#{numTests}".cyan + ' tests...'
+                                grunt.log.writeln 'Test page loaded.  Running...'
                                 statusFn = (if hasUnderscore then outputStatusUntilDoneWithUnderscore else outputStatusUntilDoneWithoutUnderscore)
                                 driver.wait ->
                                     statusFn(numTests, symbolSummaryElement).then (isPending) ->
@@ -169,15 +173,16 @@ module.exports = (grunt) ->
 
                                 , options.allTestsTimeout
                                 driver.wait ->
-                                    driver.isElementPresent(webdriver.By.id('results')).then (isPresent) ->
+                                    driver.isElementPresent(webdriver.By.className('results')).then (isPresent) ->
                                         isPresent
                                 , 6000
-                                driver.findElement(webdriver.By.id('results')).then (detailsElement) ->
+                                driver.findElement(webdriver.By.className('results')).then (detailsElement) ->
+                                    numTests = outputDots
                                     grunt.log.writeln "Done running all tests. Suite took #{(new Date() - startTime) / 1000} seconds."
                                     detailsElement.isElementPresent(webdriver.By.className('failed')).then (hasFailures) ->
-                                        if (hasFailures)
-                                            detailsElement.findElements(webdriver.By.className('failures')).then (failedElements) ->
-                                                grunt.log.writeln "#{failedElements.length} of #{numTests} tests failed:".red
+                                        if (outputFailures > 0)
+                                            detailsElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
+                                                grunt.log.writeln "#{outputFailures} of #{numTests} tests failed:".red
                                                 webdriver.promise.fullyResolved(failedElement.getText() for failedElement in failedElements).then (failureTexts) ->
                                                     grunt.log.writeln (failureText.yellow for failureText in failureTexts).join("\n\n")
                                         else
